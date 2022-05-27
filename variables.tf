@@ -29,3 +29,9 @@ variable "security_controls" {
   description = "Comma separated list of controls that should be checked."
   type        = string
 }
+
+variable "publish_ok_message_to_slack" {
+  description = "If set to true, Lambda will publish message to Slack even if no issues were found."
+  type        = bool
+  default     = false
+}
