@@ -92,11 +92,12 @@ resource "aws_lambda_function" "security_reporter_lambda" {
 
   environment {
     variables = {
-      METRICS_NAMESPACE = var.metrics_namespace
-      SECURITY_CONTROLS = var.security_controls
-      SNS_TOPIC_ARN     = var.sns_topic_arn
-      ACCOUNT_ID        = data.aws_caller_identity.current.account_id
-      ACCOUNT_ALIAS     = data.aws_iam_account_alias.current.account_alias
+      METRICS_NAMESPACE           = var.metrics_namespace
+      SECURITY_CONTROLS           = var.security_controls
+      SNS_TOPIC_ARN               = var.sns_topic_arn
+      ACCOUNT_ID                  = data.aws_caller_identity.current.account_id
+      ACCOUNT_ALIAS               = data.aws_iam_account_alias.current.account_alias
+      PUBLISH_OK_MESSAGE_TO_SLACK = var.publish_ok_message_to_slack
     }
   }
 
