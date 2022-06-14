@@ -21,7 +21,7 @@ variable "security_reporter_lambda_name" {
 }
 
 variable "sns_topic_arn" {
-  description = "ARN of an SNS topic lambda will report the result to. If default value is not overridden, Slack integration will be disabled"
+  description = "ARN of an SNS topic lambda will report the result to. If default value is not overridden, Slack integration will be disabled."
   type        = string
   default     = "DUMMY"
 }
