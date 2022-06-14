@@ -19,7 +19,7 @@ def lambda_handler(event, context):
     findings_by_control_id = group_findings_by_control_id(findings)
     report, findings_count = build_findings_report(findings_by_control_id, ACCOUNT_ALIAS, ACCOUNT_ID)
 
-    if findings_count > 0 or findings_count == 0 and PUBLISH_OK_MESSAGE_TO_SLACK == 'true':
+    if findings_count > 0 or findings_count == 0 and PUBLISH_OK_MESSAGE_TO_SLACK == 'true' and SNS_TOPIC_ARN != 'DUMMY':
         send_report_to_sns(SNS_TOPIC_ARN, report)
 
     metric_data = build_metric_data(findings_by_control_id)
