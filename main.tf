@@ -84,7 +84,7 @@ resource "aws_lambda_function" "security_reporter_lambda" {
   memory_size   = 128
   timeout       = 300
 
-  runtime          = "python3.9"
+  runtime          = "python3.8"
   role             = aws_iam_role.security_reporter_lambda_role.arn
   source_code_hash = data.archive_file.security_reporter_lambda_zip.output_base64sha256
   handler          = "security_hub_reporter.lambda_handler"
