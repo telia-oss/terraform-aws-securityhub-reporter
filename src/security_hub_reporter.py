@@ -1,4 +1,4 @@
-import boto3, os, json
+import boto3, os, json, logging
 
 sns = boto3.client('sns')
 securityhub = boto3.client('securityhub')
@@ -18,7 +18,6 @@ def lambda_handler(event, context):
     findings = get_findings()
     findings_by_control_id = group_findings_by_control_id(findings)
     report, findings_count = build_findings_report(findings_by_control_id, ACCOUNT_ALIAS, ACCOUNT_ID)
-
     if findings_count > 0 or findings_count == 0 and PUBLISH_OK_MESSAGE_TO_SLACK == 'true' and SNS_TOPIC_ARN != 'DUMMY':
         send_report_to_sns(SNS_TOPIC_ARN, report)
 
@@ -29,7 +28,8 @@ def lambda_handler(event, context):
             MetricData=metric_data['metric_data']
         )
     except Exception as e:
-        print(f"Failed to push metric data: {json.dumps(metric_data)} Exception: {e}")
+        logging.exception(f"Failed to push metric data: {json.dumps(metric_data)}")
+        raise e
 
 
 def send_report_to_sns(topic_arn, report):
@@ -40,7 +40,8 @@ def send_report_to_sns(topic_arn, report):
             Message=report
         )
     except Exception as e:
-        print(f"Problem to send report to SNS: {topic_arn} Exception: {e}")
+        logging.exception(f"Problem to send report to SNS: {topic_arn}")
+        raise e
 
 
 def build_findings_report(by_control_id, account_alias, account_id):
@@ -101,9 +102,11 @@ def get_findings():
                 Filters=_filter, NextToken=response['NextToken'])
             findings.extend(response["Findings"])
     except Exception as e:
-        print(f"Failed to get security hub findings, Exception: {e}")
+        logging.exception(f"Failed to get security hub findings")
+        raise e
 
     return findings
+
 
 def build_metric_data(by_control_id):
     compliant_control_ids = list(set(SECURITY_CONTROLS) - set(by_control_id.keys() if bool(by_control_id) else []))
