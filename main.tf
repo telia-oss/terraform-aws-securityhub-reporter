@@ -54,14 +54,18 @@ data "aws_iam_policy_document" "security_reporter_lambda_policy_document" {
     ]
   }
 
-  statement {
-    effect = "Allow"
-    actions = [
-      "sns:Publish",
-    ]
-    resources = [
-      var.sns_topic_arn,
-    ]
+  dynamic "statement" {
+    for_each = var.sns_topic_arn != "DUMMY" ? [1] : []
+
+    content {
+      effect = "Allow"
+      actions = [
+        "sns:Publish",
+      ]
+      resources = [
+        var.sns_topic_arn,
+      ]
+    }
   }
 }
 
