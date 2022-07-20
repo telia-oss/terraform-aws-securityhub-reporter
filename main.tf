@@ -55,7 +55,7 @@ data "aws_iam_policy_document" "security_reporter_lambda_policy_document" {
   }
 
   dynamic "statement" {
-    for_each = var.sns_topic_arn != "DUMMY" ? [1] : []
+    for_each = var.sns_topic_arn != null ? [1] : []
 
     content {
       effect = "Allow"
