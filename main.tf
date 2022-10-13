@@ -69,19 +69,19 @@ data "aws_iam_policy_document" "security_reporter_lambda_policy_document" {
   }
 
 
-  #  dynamic "statement" {
-  #    for_each = var.sns_topic_arn != "DUMMY" ? [1] : []
-  #
-  #    content {
-  #      effect = "Allow"
-  #      actions = [
-  #        "sns:Publish",
-  #      ]
-  #      resources = [
-  #        var.sns_topic_arn,
-  #      ]
-  #    }
-  #  }
+   dynamic "statement" {
+      for_each = var.sns_topic_arn != "DUMMY" ? [1] : []
+
+      content {
+        effect = "Allow"
+        actions = [
+          "sns:Publish",
+        ]
+        resources = [
+          var.sns_topic_arn,
+        ]
+      }
+    }
 }
 
 resource "aws_iam_role_policy" "security_reporter_lambda_role_policy" {
@@ -103,7 +103,7 @@ resource "aws_lambda_function" "security_reporter_lambda" {
   memory_size   = 128
   timeout       = 300
 
-  runtime          = "python3.8"
+  runtime          = "python3.9"
   role             = aws_iam_role.security_reporter_lambda_role.arn
   source_code_hash = data.archive_file.security_reporter_lambda_zip.output_base64sha256
   handler          = "security_hub_reporter.lambda_handler"
@@ -116,9 +116,9 @@ resource "aws_lambda_function" "security_reporter_lambda" {
       ACCOUNT_ID                  = data.aws_caller_identity.current.account_id
       ACCOUNT_ALIAS               = data.aws_iam_account_alias.current.account_alias
       PUBLISH_OK_MESSAGE_TO_SLACK = var.publish_ok_message_to_slack
-      PS_CONTROLS_IDS_API_URL     = var.security_controls_api_url.name
-      PS_CONTROLS_IDS_API_KEY     = var.security_controls_api_key.name
-      PS_CONTROLS_IDS_API_RESOURCE_PATH     = var.security_controls_api_resource_path.name
+      PS_KEY_CONTROLS_IDS_API_HOST     = local.ps_key_security_controls_api_host
+      PS_KEY_CONTROLS_IDS_API_KEY     = local.ps_key_security_controls_api_key
+      PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH     = local.ps_key_security_controls_api_resource_path
 
     }
   }
@@ -148,28 +148,28 @@ resource "aws_cloudwatch_event_target" "security_reporter_rule_target" {
   arn       = aws_lambda_function.security_reporter_lambda.arn
 }
 
-resource "aws_ssm_parameter" "security_controls_api_url" {
-  name  = var.security_controls_api_url.name
+resource "aws_ssm_parameter" "security_controls_api_host" {
+  name  = local.ps_key_security_controls_api_host
   type  = "String"
-  value = var.security_controls_api_url.value
+  value = "NOT_SET"
   lifecycle {
     ignore_changes = [value]
   }
 }
 
 resource "aws_ssm_parameter" "security_controls_api_key" {
-  name  = var.security_controls_api_key.name
+  name  = local.ps_key_security_controls_api_key
   type  = "SecureString"
-  value = var.security_controls_api_key.value
+  value = "NOT_SET"
   lifecycle {
     ignore_changes = [value]
   }
 }
 
 resource "aws_ssm_parameter" "security_controls_api_resource_path" {
-  name  = var.security_controls_api_resource_path.name
+  name  = local.ps_key_security_controls_api_resource_path
   type  = "String"
-  value = var.security_controls_api_resource_path.value
+  value = "NOT_SET"
   lifecycle {
     ignore_changes = [value]
   }
