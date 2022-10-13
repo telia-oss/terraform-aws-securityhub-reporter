@@ -40,6 +40,8 @@ data "aws_iam_policy_document" "security_reporter_lambda_policy_document" {
     ]
   }
 
+
+
   statement {
     effect = "Allow"
 
@@ -54,19 +56,32 @@ data "aws_iam_policy_document" "security_reporter_lambda_policy_document" {
     ]
   }
 
-  dynamic "statement" {
-    for_each = var.sns_topic_arn != "DUMMY" ? [1] : []
+  statement {
+    effect = "Allow"
 
-    content {
-      effect = "Allow"
-      actions = [
-        "sns:Publish",
-      ]
-      resources = [
-        var.sns_topic_arn,
-      ]
-    }
+    actions = [
+      "ssm:GetParametersByPath"
+    ]
+
+    resources = [
+      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/*",
+    ]
   }
+
+
+  #  dynamic "statement" {
+  #    for_each = var.sns_topic_arn != "DUMMY" ? [1] : []
+  #
+  #    content {
+  #      effect = "Allow"
+  #      actions = [
+  #        "sns:Publish",
+  #      ]
+  #      resources = [
+  #        var.sns_topic_arn,
+  #      ]
+  #    }
+  #  }
 }
 
 resource "aws_iam_role_policy" "security_reporter_lambda_role_policy" {
@@ -101,6 +116,10 @@ resource "aws_lambda_function" "security_reporter_lambda" {
       ACCOUNT_ID                  = data.aws_caller_identity.current.account_id
       ACCOUNT_ALIAS               = data.aws_iam_account_alias.current.account_alias
       PUBLISH_OK_MESSAGE_TO_SLACK = var.publish_ok_message_to_slack
+      PS_CONTROLS_IDS_API_URL     = var.security_controls_api_url.name
+      PS_CONTROLS_IDS_API_KEY     = var.security_controls_api_key.name
+      PS_CONTROLS_IDS_API_RESOURCE_PATH     = var.security_controls_api_resource_path.name
+
     }
   }
 
@@ -129,5 +148,33 @@ resource "aws_cloudwatch_event_target" "security_reporter_rule_target" {
   arn       = aws_lambda_function.security_reporter_lambda.arn
 }
 
+resource "aws_ssm_parameter" "security_controls_api_url" {
+  name  = var.security_controls_api_url.name
+  type  = "String"
+  value = var.security_controls_api_url.value
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+resource "aws_ssm_parameter" "security_controls_api_key" {
+  name  = var.security_controls_api_key.name
+  type  = "SecureString"
+  value = var.security_controls_api_key.value
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+resource "aws_ssm_parameter" "security_controls_api_resource_path" {
+  name  = var.security_controls_api_resource_path.name
+  type  = "String"
+  value = var.security_controls_api_resource_path.value
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
 data "aws_caller_identity" "current" {}
 data "aws_iam_account_alias" "current" {}
+data "aws_region" "current" {}
