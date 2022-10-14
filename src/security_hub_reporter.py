@@ -20,9 +20,11 @@ PS_KEY_CONTROLS_IDS_API_KEY = os.environ.get('PS_KEY_CONTROLS_IDS_API_KEY')
 PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH = os.environ.get('PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH')
 
 
-control_ids_resolver = ControlIdsResolver(SECURITY_CONTROLS, PS_ROOT_PATH, PS_KEY_CONTROLS_IDS_API_HOST, PS_KEY_CONTROLS_IDS_API_KEY, PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH)
+
 
 def lambda_handler(event, context):
+    control_ids_resolver = ControlIdsResolver(SECURITY_CONTROLS, PS_ROOT_PATH, PS_KEY_CONTROLS_IDS_API_HOST,
+                                              PS_KEY_CONTROLS_IDS_API_KEY, PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH)
     findings = get_findings()
     findings_by_control_id = group_findings_by_control_id(findings, control_ids_resolver.get_security_controls())
     report, findings_count = build_findings_report(findings_by_control_id, ACCOUNT_ALIAS, ACCOUNT_ID)
@@ -30,7 +32,7 @@ def lambda_handler(event, context):
     if SNS_TOPIC_ARN != 'DUMMY' and (findings_count > 0 or (findings_count == 0 and PUBLISH_OK_MESSAGE_TO_SLACK == 'true')):
         send_report_to_sns(SNS_TOPIC_ARN, report)
 
-    metric_data = build_metric_data(findings_by_control_id)
+    metric_data = build_metric_data(findings_by_control_id, control_ids_resolver.get_security_controls())
     try:
         cloudwatch.put_metric_data(
             Namespace=metric_data['namespace'],
@@ -117,8 +119,8 @@ def get_findings():
     return findings
 
 
-def build_metric_data(by_control_id):
-    compliant_control_ids = list(set(control_ids_resolver.get_security_controls()) - set(by_control_id.keys() if bool(by_control_id) else []))
+def build_metric_data(by_control_id, control_ids):
+    compliant_control_ids = list(set(control_ids) - set(by_control_id.keys() if bool(by_control_id) else []))
 
     by_control_id.update({ctrl_id: [] for ctrl_id in compliant_control_ids})
     metric_data = []

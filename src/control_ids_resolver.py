@@ -52,6 +52,7 @@ class ControlIdsResolver:
                                headers)
             response = connection.getresponse()
             r_body = json.loads(response.read().decode())
+            connection.close()
             return r_body['data']['ControlIds']
         except Exception as e:
             logging.exception(f"This error happened when requesting security controls from api: {e.__repr__()}")
