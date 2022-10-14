@@ -64,24 +64,24 @@ data "aws_iam_policy_document" "security_reporter_lambda_policy_document" {
     ]
 
     resources = [
-      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/*",
+      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter${var.ps_root_path}*",
     ]
   }
 
 
-   dynamic "statement" {
-      for_each = var.sns_topic_arn != "DUMMY" ? [1] : []
+  dynamic "statement" {
+    for_each = var.sns_topic_arn != "DUMMY" ? [1] : []
 
-      content {
-        effect = "Allow"
-        actions = [
-          "sns:Publish",
-        ]
-        resources = [
-          var.sns_topic_arn,
-        ]
-      }
+    content {
+      effect = "Allow"
+      actions = [
+        "sns:Publish",
+      ]
+      resources = [
+        var.sns_topic_arn,
+      ]
     }
+  }
 }
 
 resource "aws_iam_role_policy" "security_reporter_lambda_role_policy" {
@@ -110,15 +110,16 @@ resource "aws_lambda_function" "security_reporter_lambda" {
 
   environment {
     variables = {
-      METRICS_NAMESPACE           = var.metrics_namespace
-      SECURITY_CONTROLS           = var.security_controls
-      SNS_TOPIC_ARN               = var.sns_topic_arn
-      ACCOUNT_ID                  = data.aws_caller_identity.current.account_id
-      ACCOUNT_ALIAS               = data.aws_iam_account_alias.current.account_alias
-      PUBLISH_OK_MESSAGE_TO_SLACK = var.publish_ok_message_to_slack
-      PS_KEY_CONTROLS_IDS_API_HOST     = local.ps_key_security_controls_api_host
-      PS_KEY_CONTROLS_IDS_API_KEY     = local.ps_key_security_controls_api_key
-      PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH     = local.ps_key_security_controls_api_resource_path
+      METRICS_NAMESPACE                     = var.metrics_namespace
+      SECURITY_CONTROLS                     = var.security_controls
+      SNS_TOPIC_ARN                         = var.sns_topic_arn
+      ACCOUNT_ID                            = data.aws_caller_identity.current.account_id
+      ACCOUNT_ALIAS                         = data.aws_iam_account_alias.current.account_alias
+      PUBLISH_OK_MESSAGE_TO_SLACK           = var.publish_ok_message_to_slack
+      PS_ROOT_PATH                          = var.ps_root_path
+      PS_KEY_CONTROLS_IDS_API_HOST          = var.ps_key_security_controls_api_host
+      PS_KEY_CONTROLS_IDS_API_KEY           = var.ps_key_security_controls_api_key
+      PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH = var.ps_key_security_controls_api_resource_path
 
     }
   }
@@ -149,7 +150,7 @@ resource "aws_cloudwatch_event_target" "security_reporter_rule_target" {
 }
 
 resource "aws_ssm_parameter" "security_controls_api_host" {
-  name  = local.ps_key_security_controls_api_host
+  name  = "${var.ps_root_path}${var.ps_key_security_controls_api_host}"
   type  = "String"
   value = "NOT_SET"
   lifecycle {
@@ -158,7 +159,7 @@ resource "aws_ssm_parameter" "security_controls_api_host" {
 }
 
 resource "aws_ssm_parameter" "security_controls_api_key" {
-  name  = local.ps_key_security_controls_api_key
+  name  = "${var.ps_root_path}${var.ps_key_security_controls_api_key}"
   type  = "SecureString"
   value = "NOT_SET"
   lifecycle {
@@ -167,7 +168,7 @@ resource "aws_ssm_parameter" "security_controls_api_key" {
 }
 
 resource "aws_ssm_parameter" "security_controls_api_resource_path" {
-  name  = local.ps_key_security_controls_api_resource_path
+  name  = "${var.ps_root_path}${var.ps_key_security_controls_api_resource_path}"
   type  = "String"
   value = "NOT_SET"
   lifecycle {

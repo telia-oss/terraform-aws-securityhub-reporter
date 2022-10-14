@@ -14,12 +14,13 @@ ACCOUNT_ALIAS = os.environ.get('ACCOUNT_ALIAS')
 METRICS_NAMESPACE = os.environ.get('METRICS_NAMESPACE')
 PUBLISH_OK_MESSAGE_TO_SLACK = os.environ.get('PUBLISH_OK_MESSAGE_TO_SLACK')
 """ variables below are used to connect to the backend service providing set of control-ids to be reported. """
+PS_ROOT_PATH = os.environ.get('PS_ROOT_PATH')
 PS_KEY_CONTROLS_IDS_API_HOST = os.environ.get('PS_KEY_CONTROLS_IDS_API_HOST')
 PS_KEY_CONTROLS_IDS_API_KEY = os.environ.get('PS_KEY_CONTROLS_IDS_API_KEY')
 PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH = os.environ.get('PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH')
 
 
-control_ids_resolver = ControlIdsResolver(SECURITY_CONTROLS, PS_KEY_CONTROLS_IDS_API_HOST, PS_KEY_CONTROLS_IDS_API_KEY, PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH)
+control_ids_resolver = ControlIdsResolver(SECURITY_CONTROLS, PS_ROOT_PATH, PS_KEY_CONTROLS_IDS_API_HOST, PS_KEY_CONTROLS_IDS_API_KEY, PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH)
 
 def lambda_handler(event, context):
     findings = get_findings()

@@ -2,15 +2,16 @@ import boto3, logging, http.client, json, botocore
 
 
 class ControlIdsResolver:
+    DEFAULT_PARAMS_VALUE: str = "NOT_SET"
 
-    def __init__(self, security_controls, parameter_name_api_host, parameter_name_api_key,
+    def __init__(self, security_controls, ssm_param_root_path, parameter_name_api_host, parameter_name_api_key,
                  parameter_name_api_resource_path):
         self.local_security_control_id = security_controls.replace(' ', '').split(',')
-        self._parameter_name_api_host = parameter_name_api_host
-        self._parameter_name_api_key = parameter_name_api_key
-        self._parameter_name_api_resource_path = parameter_name_api_resource_path
+        self._ssm_param_root_path = ssm_param_root_path
+        self._parameter_name_api_host = self._ssm_param_root_path + parameter_name_api_host
+        self._parameter_name_api_key = self._ssm_param_root_path + parameter_name_api_key
+        self._parameter_name_api_resource_path = self._ssm_param_root_path + parameter_name_api_resource_path
         self._ssm = boto3.client('ssm')
-        self._ssm_param_root_path = "/SecurityReporter"
         self._get_param_store_configs()
         self._ignore_api = self._is_api_config_valid()
         self._centralized_security_control_ids = self._get_centralized_security_controls()
@@ -23,14 +24,15 @@ class ControlIdsResolver:
             )
             parameters = response['Parameters']
             self._control_ids_api_details = {parameter['Name']: parameter['Value'] for parameter in parameters if
-                                             parameter['Name'] in [self._parameter_name_api_host, self._parameter_name_api_key,
-                                                           self._parameter_name_api_resource_path]}
+                                             parameter['Name'] in [self._parameter_name_api_host,
+                                                                   self._parameter_name_api_key,
+                                                                   self._parameter_name_api_resource_path]}
         except botocore.exceptions.ClientError as e:
             logging.exception(e.response)
             self._control_ids_api_details = dict()
 
     def _is_api_config_valid(self):
-        if 'NOT_SET' in self._control_ids_api_details.values():
+        if len(self._control_ids_api_details) != 3 or ControlIdsResolver.DEFAULT_PARAMS_VALUE in self._control_ids_api_details.values():
             logging.warning(f"setup for control-ids api is considered not valid. {self._control_ids_api_details}")
             return False
         return True
