@@ -36,3 +36,28 @@ variable "publish_ok_message_to_slack" {
   type        = bool
   default     = false
 }
+
+variable "ps_root_path" {
+  description = "ssm parameters path under which the parameters are created."
+  type        = string
+  default     = "/SecurityReporter/"
+}
+
+variable "ps_key_security_controls_api_resource_path" {
+  description = "Name of the SSM parameter where resource path to REST API returning controls ID is stored."
+  type        = string
+  default     = "securityControlsApiResourcePath"
+
+}
+
+variable "ps_key_security_controls_api_key" {
+  description = "Name of the SSM parameter where api key to REST API returning controls ID is stored."
+  type        = string
+  default     = "securityControlsApiKey"
+}
+
+variable "ps_key_security_controls_api_host" {
+  description = "Name of the SSM parameter where a host to REST API returning controls ID is stored."
+  type        = string
+  default     = "securityControlsApiHost"
+}
