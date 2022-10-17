@@ -1,3 +1,10 @@
 .idea
 security-reporter-lambda.zip
 examples/.terraform
+src/.aws-sam/
+
+#terraform
+*.hcl
+*.tfstate
+*.backup
+
