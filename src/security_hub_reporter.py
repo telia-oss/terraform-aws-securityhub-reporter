@@ -1,10 +1,7 @@
 import boto3, os, json, logging
 from control_ids_resolver import ControlIdsResolver
-
-
-sns = boto3.client('sns')
-securityhub = boto3.client('securityhub')
-cloudwatch = boto3.client('cloudwatch')
+import utils
+import logging
 
 GENERATOR_ID = 'aws-foundational-security-best-practices/v/1.0.0'
 SECURITY_CONTROLS = os.environ.get('SECURITY_CONTROLS')
@@ -13,13 +10,19 @@ ACCOUNT_ID = os.environ.get('ACCOUNT_ID')
 ACCOUNT_ALIAS = os.environ.get('ACCOUNT_ALIAS')
 METRICS_NAMESPACE = os.environ.get('METRICS_NAMESPACE')
 PUBLISH_OK_MESSAGE_TO_SLACK = os.environ.get('PUBLISH_OK_MESSAGE_TO_SLACK')
+USE_FINDING_AGGREGATOR = os.environ.get('USE_FINDING_AGGREGATOR')
 """ variables below are used to connect to the backend service providing set of control-ids to be reported. """
 PS_ROOT_PATH = os.environ.get('PS_ROOT_PATH')
 PS_KEY_CONTROLS_IDS_API_HOST = os.environ.get('PS_KEY_CONTROLS_IDS_API_HOST')
 PS_KEY_CONTROLS_IDS_API_KEY = os.environ.get('PS_KEY_CONTROLS_IDS_API_KEY')
 PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH = os.environ.get('PS_KEY_CONTROLS_IDS_API_RESOURCE_PATH')
 
+sns = boto3.client('sns')
+cloudwatch = boto3.client('cloudwatch')
+securityhub = utils.get_securityhub_client() if USE_FINDING_AGGREGATOR == "T" else boto3.client('securityhub')
 
+logger = logging.getLogger();
+logger.setLevel("INFO")
 
 
 def lambda_handler(event, context):
@@ -29,7 +32,8 @@ def lambda_handler(event, context):
     findings_by_control_id = group_findings_by_control_id(findings, control_ids_resolver.get_security_controls())
     report, findings_count = build_findings_report(findings_by_control_id, ACCOUNT_ALIAS, ACCOUNT_ID)
 
-    if SNS_TOPIC_ARN != 'DUMMY' and (findings_count > 0 or (findings_count == 0 and PUBLISH_OK_MESSAGE_TO_SLACK == 'true')):
+    if SNS_TOPIC_ARN != 'DUMMY' and (
+            findings_count > 0 or (findings_count == 0 and PUBLISH_OK_MESSAGE_TO_SLACK == 'true')):
         send_report_to_sns(SNS_TOPIC_ARN, report)
 
     metric_data = build_metric_data(findings_by_control_id, control_ids_resolver.get_security_controls())
@@ -39,7 +43,7 @@ def lambda_handler(event, context):
             MetricData=metric_data['metric_data']
         )
     except Exception as e:
-        logging.exception(f"Failed to push metric data: {json.dumps(metric_data)}")
+        logger.exception(f"Failed to push metric data: {json.dumps(metric_data)}")
         raise e
 
 
@@ -51,7 +55,7 @@ def send_report_to_sns(topic_arn, report):
             Message=report
         )
     except Exception as e:
-        logging.exception(f"Problem to send report to SNS: {topic_arn}")
+        logger.exception(f"Problem to send report to SNS: {topic_arn}")
         raise e
 
 
@@ -112,8 +116,9 @@ def get_findings():
             response = securityhub.get_findings(
                 Filters=_filter, NextToken=response['NextToken'])
             findings.extend(response["Findings"])
+
     except Exception as e:
-        logging.exception(f"Failed to get security hub findings")
+        logger.exception(f"Failed to get security hub findings")
         raise e
 
     return findings

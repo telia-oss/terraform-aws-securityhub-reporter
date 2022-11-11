@@ -37,6 +37,12 @@ variable "publish_ok_message_to_slack" {
   default     = false
 }
 
+variable "use_finding_aggregator" {
+  description = "If set to true, Lambda will check for finding aggregator region and use it to get the findings."
+  type        = string
+  default     = "T"
+}
+
 variable "ps_root_path" {
   description = "ssm parameters path under which the parameters are created."
   type        = string
