@@ -116,6 +116,7 @@ resource "aws_lambda_function" "security_reporter_lambda" {
       ACCOUNT_ID                            = data.aws_caller_identity.current.account_id
       ACCOUNT_ALIAS                         = data.aws_iam_account_alias.current.account_alias
       PUBLISH_OK_MESSAGE_TO_SLACK           = var.publish_ok_message_to_slack
+      USE_FINDING_AGGREGATOR                = var.use_finding_aggregator
       PS_ROOT_PATH                          = var.ps_root_path
       PS_KEY_CONTROLS_IDS_API_HOST          = var.ps_key_security_controls_api_host
       PS_KEY_CONTROLS_IDS_API_KEY           = var.ps_key_security_controls_api_key
