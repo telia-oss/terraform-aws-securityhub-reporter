@@ -8,3 +8,4 @@ src/.aws-sam/
 *.tfstate
 *.backup
 
+/tests/lambda_env.py

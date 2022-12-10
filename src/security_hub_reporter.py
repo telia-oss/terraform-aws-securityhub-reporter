@@ -37,14 +37,15 @@ def lambda_handler(event, context):
         send_report_to_sns(SNS_TOPIC_ARN, report)
 
     metric_data = build_metric_data(findings_by_control_id, control_ids_resolver.get_security_controls())
-    try:
-        cloudwatch.put_metric_data(
-            Namespace=metric_data['namespace'],
-            MetricData=metric_data['metric_data']
-        )
-    except Exception as e:
-        logger.exception(f"Failed to push metric data: {json.dumps(metric_data)}")
-        raise e
+    #logger.info(metric_data)
+    # try:
+    #     cloudwatch.put_metric_data(
+    #         Namespace=metric_data['namespace'],
+    #         MetricData=metric_data['metric_data']
+    #     )
+    # except Exception as e:
+    #     logger.exception(f"Failed to push metric data: {json.dumps(metric_data)}")
+    #     raise e
 
 
 def send_report_to_sns(topic_arn, report):
