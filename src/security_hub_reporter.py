@@ -35,9 +35,9 @@ def lambda_handler(event, context):
     if SNS_TOPIC_ARN != 'DUMMY' and (
             findings_count > 0 or (findings_count == 0 and PUBLISH_OK_MESSAGE_TO_SLACK == 'true')):
         send_report_to_sns(SNS_TOPIC_ARN, report)
-
-    metric_data = build_metric_data(findings_by_control_id, control_ids_resolver.get_security_controls())
-    #logger.info(metric_data)
+    log_findings(findings_by_control_id, control_ids_resolver.get_security_controls())
+    # metric_data = build_metric_data(findings_by_control_id, control_ids_resolver.get_security_controls())
+    # logger.info(metric_data)
     # try:
     #     cloudwatch.put_metric_data(
     #         Namespace=metric_data['namespace'],
@@ -154,3 +154,19 @@ def build_metric_data(by_control_id, control_ids):
         'metric_data': metric_data,
         'namespace': namespace
     }
+
+
+def log_findings(by_control_id, control_ids):
+    compliant_control_ids = list(set(control_ids) - set(by_control_id.keys() if bool(by_control_id) else []))
+
+    by_control_id.update({ctrl_id: [] for ctrl_id in compliant_control_ids})
+    metric_data = []
+
+    for ctrl_id, findings in by_control_id.items():
+        entity_dict = {
+            "SecurityRuleStatus": {
+                "ControlId": ctrl_id,
+                "Findings": len(findings)
+            }
+        }
+        logger.info(json.dumps(entity_dict, indent=4))
